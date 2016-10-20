@@ -1,0 +1,28 @@
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header" data-background-color="green">
+                                    <h4 class="title">Jobs</h4>
+                                    <p class="category">List of Jobs to monitor</p>
+                                </div>
+                                <div class="card-content table-responsive">
+                                    <table class="table">
+                                        <thead class="text-primary">
+                                            <th>Job Name</th>
+                                            <th>History Size</th>
+                                        </thead>
+                                        <tbody>
+                                            #foreach($job in $JOBS.keySet())
+                                            <tr>
+                                                <td>$job</td>
+                                                <td>$JOBS.get($job)</td>
+                                            </tr>
+                                            #end
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
