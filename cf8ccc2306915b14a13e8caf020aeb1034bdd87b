@@ -1,0 +1,9 @@
+Quality-Assurance+1: Nemesis CI <nemesis@lina-infra.ru>
+Code-Review+2: Alexey Deryugin <me+review@velovec.ru>
+Workflow+1: Alexey Deryugin <me+review@velovec.ru>
+Verified+2: Nemesis CI <nemesis@lina-infra.ru>
+Submitted-by: Nemesis CI <nemesis@lina-infra.ru>
+Submitted-at: Thu, 20 Oct 2016 14:40:47 +0300
+Reviewed-on: https://review.lina-infra.ru/379
+Project: linaDevel/observer
+Branch: refs/heads/master
