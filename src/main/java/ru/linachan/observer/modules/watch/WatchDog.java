@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import ru.linachan.common.GenericCore;
 import ru.linachan.common.utils.Queue;
 import ru.linachan.observer.ObserverWorker;
+import ru.linachan.observer.component.ComponentManager;
+import ru.linachan.observer.modules.telegram.TelegramNotify;
 import ru.linachan.observer.modules.watch.data.build.BuildData;
 import ru.linachan.observer.service.Service;
 
@@ -24,7 +26,9 @@ public class WatchDog implements Service {
 
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private Queue<BuildWithDetails> failedBuilds;
-    private MongoCollection<Document> builds;
+    private MongoCollection<Document> builds = ObserverWorker.db().collection("builds");;
+
+    private TelegramNotify bot;
 
     private boolean running = true;
 
@@ -61,6 +65,10 @@ public class WatchDog implements Service {
             GenericCore.instance().config().getLong("jenkins.watch_interval", 120L),
             TimeUnit.SECONDS
         );
+
+        bot = GenericCore.instance()
+            .manager(ComponentManager.class)
+            .get(TelegramNotify.class);
     }
 
     @Override
@@ -68,7 +76,7 @@ public class WatchDog implements Service {
         while (running) {
             BuildWithDetails build = failedBuilds.pop();
             if (build != null) {
-                boolean buildFound = builds().count(
+                boolean buildFound = builds.count(
                     new Document("buildId", Integer.parseInt(build.getFullDisplayName().split(" #")[1]))
                         .append("jobName", build.getFullDisplayName().split(" #")[0])
                 ) > 0;
@@ -78,21 +86,35 @@ public class WatchDog implements Service {
 
                     try {
                         BuildData buildData = new BuildData(build);
-                        builds().insertOne(buildData.toBSON());
+
+                        StringBuilder report = new StringBuilder();
+
+                        report.append("<b>New failed build</b>\n\n");
+                        report.append(String.format("<b>Job:</b> %s\n", buildData.jobName()));
+                        report.append(String.format(
+                            "<b>Build:</b> <a href='%s'>%s</a>\n", buildData.url(), buildData.buildId()
+                        ));
+
+                        if (buildData.triggeredBy().equals("timer")) {
+                            report.append("<b>Triggered by:</b> Timer\n");
+                        } else {
+                            report.append(String.format(
+                                "<b>Triggered by:</b> <a href='%s'>CR #%s,%s: %s</a>\n", buildData.triggeredBy(),
+                                buildData.changeId(), buildData.patchSet(), buildData.changeTitle()
+                            ));
+                        }
+
+                        report.append(String.format("<b>Time:</b> %s\n", buildData.time()));
+
+                        bot.send(report.toString());
+
+                        builds.insertOne(buildData.toBSON());
                     } catch (IOException e) {
                         logger.error("Unable to get Build details: {}", e.getMessage());
                     }
                 }
             }
         }
-    }
-
-    public MongoCollection<Document> builds() {
-        if (builds != null)
-            return builds;
-
-        builds = ((ObserverWorker) GenericCore.instance().worker()).db().collection("builds");
-        return builds;
     }
 
     @Override

@@ -7,14 +7,14 @@ import ru.linachan.observer.db.DataBaseWrapper;
 
 public class ObserverWorker implements GenericWorker {
 
-    private DataBaseWrapper dataBaseWrapper;
+    private static DataBaseWrapper dataBaseWrapper = new DataBaseWrapper(
+        GenericCore.instance().config().getString("db.uri", "mongodb://127.0.0.1:27017/"),
+        GenericCore.instance().config().getString("db.name", "observer")
+    );
 
     @Override
     public void onInit() {
-        dataBaseWrapper = new DataBaseWrapper(
-            GenericCore.instance().config().getString("db.uri", "mongodb://127.0.0.1:27017/"),
-            GenericCore.instance().config().getString("db.name", "observer")
-        );
+
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ObserverWorker implements GenericWorker {
         }
     }
 
-    public DataBaseWrapper db() {
+    public static DataBaseWrapper db() {
         return dataBaseWrapper;
     }
 }
