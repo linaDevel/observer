@@ -1,0 +1,5 @@
+.idea/
+target/
+src/main/java/ru/linachan/test/
+*.iml
+*.class

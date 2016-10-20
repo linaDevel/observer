@@ -1,0 +1,146 @@
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="panel-group" id="report_group_accordion">
+                            #foreach($reportGroup in $REPORTS)
+                                <div class="panel panel-default">
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title">
+                                            <a data-toggle="collapse" data-parent="#report_group_accordion" href="#report_group_${reportGroup.id()}"><i id="state_group_${reportGroup.id()}" class="material-icons#if($reportGroup.ok()) text-success">done_all#else text-danger">error#end</i>#if($reportGroup.id() != "null") CR #${reportGroup.changeId()},${reportGroup.patchSet()} :: ${reportGroup.changeTitle()}#else Timer#end</a>
+                                        </h4>
+                                    </div>
+                                    <div id="report_group_${reportGroup.id()}" class="panel-collapse collapse">
+                                        <div class="panel-group" id="report_accordion">
+                                            #foreach($report in $reportGroup.reports())
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        <h4 class="panel-title">
+                                                            <a data-toggle="collapse" data-parent="#report_accordion" href="#report_${report.id()}"><i id="state_${report.id()}" class="material-icons#if($report.comment().length() > 0) text-success">done_all#else text-danger">error#end</i> ${report.jobName()} :: Build #${report.buildId()}</a>
+                                                        </h4>
+                                                    </div>
+                                                    <div id="report_${report.id()}" class="panel-collapse collapse">
+                                                        <div class="panel-body">
+                                                            <div id="data_${report.id()}" class="tab-pane">
+                                                                <ul class="nav nav-tabs">
+                                                                    <li class="active"><a data-toggle="tab" href="#overview_${report.id()}">Overview</a></li>
+                                                                    #if($report.noOpTests().size() > 0)<li><a data-toggle="tab" href="#noop_${report.id()}">NoOp Tests</a></li>#end
+                                                                    #if($report.deploymentErrors().size() > 0)<li><a data-toggle="tab" href="#errors_${report.id()}">Deployment Errors</a></li>#end
+                                                                </ul>
+
+                                                                <div class="tab-content">
+                                                                    <div id="overview_${report.id()}" class="tab-pane active table-responsive">
+                                                                        <table class="table">
+                                                                            <tbody>
+                                                                            <tr>
+                                                                                <td class="text-primary">Title</td>
+                                                                                <td colspan="2"><a href="${report.url()}">${report.jobName()} :: Build #${report.buildId()}</a></td>
+                                                                            </tr>
+                                                                                #if($report.triggeredBy() != "timer")
+                                                                                <tr>
+                                                                                    <td class="text-primary">Triggered By</td>
+                                                                                    <td colspan="2"><a href="${report.triggeredBy()}">CR #${report.changeId()},${report.patchSet()}</a></td>
+                                                                                </tr>
+                                                                                <tr>
+                                                                                    <td class="text-primary">Change Title</td>
+                                                                                    <td colspan="2">${report.changeTitle()}</td>
+                                                                                </tr>
+                                                                                #else
+                                                                                <tr>
+                                                                                    <td class="text-primary">Triggered By</td>
+                                                                                    <td colspan="2">Timer</td>
+                                                                                </tr>
+                                                                                #end
+                                                                            <tr>
+                                                                                <td class="text-primary">Slave</td>
+                                                                                <td colspan="2">${report.slave()}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="text-primary">Comment</td>
+                                                                                <td id="comment_${report.id()}">#if($report.comment())${report.comment()}#end </td>
+                                                                                <td>
+                                                                                    <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#comment_modal_${report.id()}">Edit</button>
+                                                                                    <div id="comment_modal_${report.id()}" class="modal" data-backdrop="false">
+                                                                                        <div class="modal-dialog">
+                                                                                            <div class="modal-content">
+                                                                                                <div class="modal-header">
+                                                                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                                                    <h4 class="modal-title">Update comment</h4>
+                                                                                                </div>
+                                                                                                <div class="modal-body">
+                                                                                                    <div class="form-group label-floating is-empty">
+                                                                                                        <label class="control-label">Comment</label>
+                                                                                                        <textarea id="comment_data_${report.id()}" class="form-control" rows="5">${report.comment()}</textarea>
+                                                                                                        <span class="material-input"></span>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="modal-footer">
+                                                                                                    <button type="button" class="btn btn-default btn-success" data-dismiss="modal" onclick="setComment('${report.id()}');">Save</button>
+                                                                                                    <button type="button" class="btn btn-default btn-danger" data-dismiss="modal">Cancel</button>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td class="text-primary">Time</td>
+                                                                                <td colspan="2">${report.time()}</td>
+                                                                            </tr>
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                    #if($report.noOpTests().size() > 0)
+                                                                        <div id="noop_${report.id()}" class="tab-pane table-responsive">
+                                                                            <table class="table">
+                                                                                <thead class="text-primary">
+                                                                                <th>Task</th>
+                                                                                <th>YAML</th>
+                                                                                <th>OS</th>
+                                                                                <th>Test</th>
+                                                                                <th>State</th>
+                                                                                <th>Reason</th>
+                                                                                </thead>
+                                                                                <tbody>
+                                                                                    #foreach($noOpTest in $report.noOpTests())
+                                                                                        #foreach($noOpTestResult in $noOpTest.failedTests())
+                                                                                        <tr>
+                                                                                            <td>${noOpTest.task()}</td>
+                                                                                            <td>${noOpTest.configuration()}</td>
+                                                                                            <td>${noOpTest.os()}</td>
+                                                                                            <td>${noOpTestResult.name()}</td>
+                                                                                            <td>${noOpTestResult.state()}</td>
+                                                                                            <td>${noOpTestResult.reason()}</td>
+                                                                                        </tr>
+                                                                                        #end
+                                                                                    #end
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    #end
+                                                                    #if($report.deploymentErrors().size() > 0)
+                                                                        <div id="errors_${report.id()}" class="tab-pane table-responsive">
+                                                                            <table class="table">
+                                                                                <tbody>
+                                                                                    #foreach($error in $report.deploymentErrors())
+                                                                                    <tr>
+                                                                                        <td>${error}</td>
+                                                                                    </tr>
+                                                                                    #end
+                                                                                </tbody>
+                                                                            </table>
+                                                                        </div>
+                                                                    #end
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            #end
+                                        </div>
+                                    </div>
+                                </div>
+                            #end
+                            </div>
+                        </div>
+                    </div>
+                </div>
